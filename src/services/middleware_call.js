@@ -35,11 +35,10 @@ const middleware = {
 		return data
 	},
 
+	// Pour sauvegarder dans le LocalStorage
 	saveInLocal( tideDatas ) {
-
 		window.localStorage.setItem( 'tideData', JSON.stringify(tideDatas) );
 		window.localStorage.setItem( 'tideData_createdAt', new Date().toISOString() );
-
 	}
 }
 

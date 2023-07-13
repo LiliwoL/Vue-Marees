@@ -1,7 +1,11 @@
 import requests
 import datetime
 from flask import Flask
+from flask_cors import CORS, cross_origin
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
 
 url = 'https://services.data.shom.fr/b2q8lrcdl4s04cbabsj4nhcb/hdm/spm/hlt?'
 
@@ -13,11 +17,14 @@ date = datetime.date.today().strftime('%Y-%m-%d')
 utc = 'standard'
 correlation = '1'
 
+# Méthode pour construire l'url d'appel auprès de shom.fr
 def buildUrl():
   return url + 'harborName=' + harborName + '&duration=' + duration + '&date=' + date + '&utc=' + utc + '&correlation=' + correlation
 
-
+# Route principale pour avoir les horaires
+# ############################################
 @app.route('/')
+@cross_origin()
 def getTideData():
   headers = {
     "Content-Type": "application/json; charset=utf-8",

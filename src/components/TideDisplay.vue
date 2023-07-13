@@ -77,14 +77,17 @@ export default {
 
 		getTideData() {
 
+      // Requete auporès du middleware
       middleware.fetchTide()
       .then(
         value => {
           this.tideDatas = value
 
-          console.log("On a reçu");
-          console.log (value);
+          console.log("💧💧 Tides data:");
+          console.table(value);
+          console.log("----------------");
 
+          // Analyse de ce qui a été reçu
           this.parseTideData();
         }
       )
@@ -94,27 +97,26 @@ export default {
 
     },
 
+    // Pour analyser les données reçues
     parseTideData() {
-
+      // Tableau qui ne contiendra que les prochaines marées hautes
       let highTideTime = [];
 
-      // Recherche de la prochaine Pleine Mer
+      // Recherche de la prochaine Pleine Mer et ajout dans le tableau highTideTime
       for (const key in this.tideDatas) {
-
         // Filter to get only high tides
         highTideTime.push( this.tideDatas[key].filter(
           entry => entry[0] == 'tide.high'
         ));
-
       }
 
-      console.log(highTideTime);
+      //console.log("💧💧 Next high tides:");
+      //console.table(highTideTime);
+      //console.log("----------------");
 
+      //
       highTideTime.forEach(element => {
-
-
         element.forEach( subElement => {
-
           console.log (subElement);
 
           let time = subElement[1].split(':');
@@ -123,11 +125,12 @@ export default {
           let minute = time[1];
 
           // Get Next High Tide
+          // *******************
           this.dateNextHighTide = new Date();
           this.dateNextHighTide.setHours( hour );
           this.dateNextHighTide.setMinutes( minute );
 
-          console.log("Next High Tide");
+          console.log("💧💧 Next high tide:");
           console.log( this.dateNextHighTide );
 
           // Update SVG
@@ -140,14 +143,9 @@ export default {
             this.timeToNextHighTide = date.dateDiff( this.dateNow, this.dateNextHighTide );
 
             return;
-
           }
-
         });
-
-
       });
-
     }
   }
 }
