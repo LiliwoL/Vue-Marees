@@ -30,6 +30,7 @@
 <script>
 import middleware from '../services/middleware_call'
 import date from '../mixins/mixins';
+import { toRaw } from 'vue';
 
 export default {
   name: 'TideDisplay',
@@ -40,7 +41,7 @@ export default {
       dateNow: Date,
       dateNextHighTide: Date,
       timeToNextHighTide: '',
-      tideDatas : '',
+      tideDatas : Array,    // Attention, bien que déclaré en tableau, ce sera un Proxy!
       percent: 0
     }
   },
@@ -57,7 +58,7 @@ export default {
       function(){
 
         this.dateNow = new Date();
-        this.getTideData();
+        //this.getTideData();
 
       }.bind(this),
       60000
@@ -81,11 +82,9 @@ export default {
       middleware.fetchTide()
       .then(
         value => {
-          this.tideDatas = value
 
-          console.log("💧💧 Tides data:");
-          console.table(value);
-          console.log("----------------");
+          // Récupération des valeurs issues de la requête et conservation dans le composant
+          this.tideDatas = value;
 
           // Analyse de ce qui a été reçu
           this.parseTideData();
@@ -99,25 +98,59 @@ export default {
 
     // Pour analyser les données reçues
     parseTideData() {
-      // Tableau qui ne contiendra que les prochaines marées hautes
-      let highTideTime = [];
+      // Objet qui ne contiendra que les prochaines marées hautes
+      let highTidesTime = [];
+      // Transformation du tableau des tides (on transforme de proxy à Array)
+      let tidesDataAsArray = toRaw(this.tideDatas);
 
-      // Recherche de la prochaine Pleine Mer et ajout dans le tableau highTideTime
-      for (const key in this.tideDatas) {
-        // Filter to get only high tides
-        highTideTime.push( this.tideDatas[key].filter(
+      console.log("----------------");
+      console.log("💧💧 Tides data:");
+      console.table( tidesDataAsArray );
+      console.log("----------------");
+
+      // Recherche des prochaines Pleines Mer et ajout dans le tableau highTidesTime
+      for (const key in tidesDataAsArray) {
+        highTidesTime[key] = [];
+
+        // Filter to get ONLY high tides
+        let highTidesTimeArray = [];
+        highTidesTimeArray = tidesDataAsArray[key].filter(
           entry => entry[0] == 'tide.high'
-        ));
+        );
+
+        // Recréation d'un tableau plus lisible
+        highTidesTimeArray.forEach(
+            element => {
+
+              // Ajout d'une prochaine pleine mer au format de tableau plus simple à lire
+              highTidesTime.push ( {
+                date: date.getDateFromStringToString( key + " " + element[1] ),  // Genere la date avec la date ET l'heure
+                coef: element[3],
+                height: element[2]
+              });
+            }
+        );
       }
 
-      //console.log("💧💧 Next high tides:");
-      //console.table(highTideTime);
-      //console.log("----------------");
+      console.log("----------------");
+      console.log("💧💧 Next High Tides data:");
+      console.table(highTidesTime);
+      console.log("----------------");
+
+      // Parcours du tableau pour récupérer la prochaine pleine mer
+
+      // Récupération des prochaines pleines mer du jour actuel
+      let today = date.today();
+      console.log(today)
+
+      console.log("💧💧 Next high tide:");
+      console.table(highTidesTime[ today ]);
+      console.log("----------------");
 
       //
-      highTideTime.forEach(element => {
+      highTidesTime.forEach(element => {
         element.forEach( subElement => {
-          console.log (subElement);
+          //console.log (subElement);
 
           let time = subElement[1].split(':');
 
@@ -131,7 +164,7 @@ export default {
           this.dateNextHighTide.setMinutes( minute );
 
           console.log("💧💧 Next high tide:");
-          console.log( this.dateNextHighTide );
+          console.log( date.format_date(this.dateNextHighTide) );
 
           // Update SVG
           let diffInPercent = date.dateDiffInPercent( this.dateNow, this.dateNextHighTide );
